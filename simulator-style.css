@@ -1,0 +1,89 @@
+:root {
+    --bp-bg: #020617;
+    --bp-grid: rgba(100, 255, 218, 0.07);
+    --bp-cyan: #00f2ff;
+    --bp-white: #e6f1ff;
+    --bp-panel: rgba(11, 17, 32, 0.95);
+    --bp-border: #1e293b;
+    --danger: #ff4d4d;
+}
+
+body {
+    margin: 0; background-color: var(--bp-bg);
+    font-family: 'Outfit', sans-serif; color: var(--bp-white);
+    overflow: hidden;
+    /* BLUEPRINT GRID */
+    background-image: 
+        linear-gradient(var(--bp-grid) 1px, transparent 1px), 
+        linear-gradient(90deg, var(--bp-grid) 1px, transparent 1px);
+    background-size: 40px 40px;
+}
+
+/* Modal Overlay */
+#tutorial-overlay {
+    position: fixed; inset: 0; z-index: 999;
+    background: var(--bp-bg); display: flex; align-items: center; justify-content: center;
+}
+.modal-box {
+    background: #0b1120; padding: 60px; width: 450px; text-align: center;
+    border: 1px solid rgba(255,255,255,0.05);
+}
+.auth-tag { color: var(--bp-cyan); font-size: 0.7rem; font-weight: 900; letter-spacing: 3px; margin-bottom: 10px; }
+.blueprint-title { font-weight: 900; letter-spacing: 4px; margin-bottom: 40px; }
+.protocol-list { text-align: left; margin-bottom: 40px; font-size: 0.85rem; }
+.step { margin-bottom: 15px; display: flex; }
+.step span { color: var(--bp-cyan); font-family: 'JetBrains Mono'; margin-right: 15px; font-weight: bold; }
+
+.init-btn {
+    width: 100%; background: var(--bp-white); color: #000; border: none;
+    padding: 18px; font-weight: 900; cursor: pointer; transition: 0.2s;
+}
+.init-btn:hover { background: var(--bp-cyan); }
+
+/* Interface Panels */
+#main-content-wrapper { transition: filter 0.5s; filter: blur(20px); pointer-events: none; }
+body.system-ready #main-content-wrapper { filter: blur(0); pointer-events: auto; }
+
+.blueprint-panel {
+    position: absolute; background: var(--bp-panel);
+    border: 1px solid var(--bp-border); z-index: 100;
+}
+#dashboard-ui { top: 40px; left: 30px; width: 260px; padding: 35px 20px 20px; }
+#traffic-monitor { top: 40px; right: 30px; width: 320px; height: 85vh; padding: 35px 20px; display: flex; flex-direction: column; }
+
+.label-ribbon {
+    position: absolute; top: -10px; left: 15px; background: var(--bp-cyan);
+    color: var(--bp-bg); padding: 3px 10px; font-size: 0.6rem; font-weight: 900;
+}
+
+.tool-btn, .io-btn {
+    width: 100%; margin-bottom: 8px; padding: 10px;
+    background: transparent; border: 1px solid var(--bp-cyan);
+    color: var(--bp-cyan); font-family: 'JetBrains Mono'; cursor: pointer; font-size: 0.7rem;
+}
+.danger-btn { color: var(--danger); border-color: var(--danger); }
+.active-tool { background: var(--bp-cyan) !important; color: var(--bp-bg) !important; }
+
+.execute-btn { 
+    width: 100%; background: var(--bp-cyan); color: var(--bp-bg); 
+    border: none; padding: 15px; font-weight: 900; margin-top: 15px; cursor: pointer;
+}
+.reset-btn { background: white; color: black; border: none; padding: 5px 10px; font-size: 0.6rem; font-weight: bold; margin-top: 10px; cursor: pointer; }
+
+.bp-divider { border: 0; border-top: 1px solid var(--bp-border); margin: 20px 0; }
+
+/* Status Tags */
+.status-tag {
+    font-size: 0.55rem; font-weight: 900; letter-spacing: 1px;
+    margin-top: 8px; padding: 2px 6px; display: inline-block; border-radius: 2px;
+}
+.status-init { color: #ffab00; border: 1px solid #ffab00; }
+.status-done { color: var(--bp-cyan); border: 1px solid var(--bp-cyan); text-shadow: 0 0 8px var(--bp-cyan); }
+
+#feed-container { flex-grow: 1; overflow-y: auto; font-family: 'JetBrains Mono'; font-size: 0.7rem; padding: 15px 0; }
+.log-entry { border-bottom: 1px solid rgba(100, 255, 218, 0.1); padding: 12px 0; }
+.log-path { color: var(--bp-cyan); margin-top: 4px; display: block; font-weight: bold; }
+.packet-stats { display: flex; justify-content: space-between; padding-bottom: 15px; border-bottom: 1px solid var(--bp-border); }
+.stat small { display: block; font-size: 0.5rem; opacity: 0.6; }
+.stat span { font-size: 1.2rem; font-weight: bold; }
+.uptime-bar { border-top: 1px solid var(--bp-border); padding-top: 15px; font-size: 0.8rem; font-weight: bold; }

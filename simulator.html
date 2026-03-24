@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Network Architect | Blueprint Edition</title>
+    <link rel="stylesheet" href="simulator-style.css">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Outfit:wght@300;600;900&display=swap" rel="stylesheet">
+</head>
+<body class="blueprint-theme">
+    <div id="tutorial-overlay">
+        <div class="modal-box">
+            <div class="auth-tag">AUTHENTICATION REQUIRED</div>
+            <h1 class="blueprint-title">COMMAND PROTOCOL</h1>
+            <div class="protocol-list">
+                <div class="step"><span>[01]</span> <b>DEPLOY:</b> Place routers on the grid</div>
+                <div class="step"><span>[02]</span> <b>BRIDGE:</b> Connect routers to establish a link</div>
+                <div class="step"><span>[03]</span> <b>ASSIGN:</b> Set Start/End nodes in MOVE mode</div>
+                <div class="step"><span>[04]</span> <b>EXECUTE:</b> Watch A* optimize the packet route</div>
+            </div>
+            <button id="close-tutorial" class="init-btn">INITIALIZE ARCHITECT</button>
+        </div>
+    </div>
+
+    <div id="main-content-wrapper">
+        <div id="dashboard-ui" class="blueprint-panel">
+            <div class="label-ribbon">CONTROLS</div>
+            <div class="tool-group">
+                <button id="btn-node" class="tool-btn">ADD NODE</button>
+                <button id="btn-link" class="tool-btn">ADD LINK</button>
+                <button id="btn-move" class="tool-btn active-tool">SELECT/MOVE</button>
+                <button id="btn-congest" class="tool-btn danger-btn">CONGEST</button>
+            </div>
+            <div class="io-group">
+                <button id="btn-start" class="io-btn">SET START</button>
+                <button id="btn-end" class="io-btn">SET END</button>
+            </div>
+            <hr class="bp-divider">
+            <div class="settings">
+                <label>LINK CONGESTION</label>
+                <input type="range" id="noise-slider" min="0" max="100" value="20">
+            </div>
+            <button id="btn-run" class="execute-btn">EXECUTE PACKET TRANSFER</button>
+            <button id="btn-reset" class="reset-btn">WIPE GRID</button>
+        </div>
+
+        <div id="traffic-monitor" class="blueprint-panel">
+            <div class="label-ribbon">LIVE DATA STREAM</div>
+            <div class="packet-stats">
+                <div class="stat"><small>TOTAL SENT</small> <span id="total-sent">0</span></div>
+                <div class="stat"><small>ACTIVE</small> <span id="packet-count">0</span></div>
+            </div>
+            <div id="feed-container">
+                <div class="empty-feed">AWAITING SYSTEM INITIALIZATION...</div>
+            </div>
+            <div class="uptime-bar">
+                UPTIME: <span id="uptime">00:00</span>
+            </div>
+        </div>
+
+        <canvas id="networkCanvas"></canvas>
+    </div>
+
+    <script src="simulator.js"></script>
+</body>
+</html>
