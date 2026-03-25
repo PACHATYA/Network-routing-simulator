@@ -42,8 +42,16 @@
             <div class="tool-group">
                 <button id="btn-node" class="tool-btn">ADD NODE</button>
                 <button id="btn-link" class="tool-btn">ADD LINK</button>
-                <button id="btn-mesh" class="tool-btn">GENERATE MESH</button>
+                <select id="topologyType" class="tool-select">
+                    <option value="mesh">MESH</option>
+                    <option value="bus">BUS</option>
+                    <option value="ring">RING</option>
+                    <option value="star">STAR</option>
+                </select>
+                <button id="btn-mesh" class="tool-btn">GENERATE TOPOLOGY</button>
                 <button id="btn-move" class="tool-btn active-tool">MOVE</button>
+                <button id="btn-pan" class="tool-btn">PAN VIEW</button>
+                <button id="btn-weight" class="tool-btn">SELECT EDGE</button>
                 <button id="btn-congest" class="tool-btn danger-btn">CONGEST</button>
             </div>
 
@@ -60,8 +68,21 @@
             </div>
 
             <div class="settings">
-                <label>EDGE WIDTH</label>
-                <input type="range" id="edgeWidthSlider" min="1" max="10" value="2">
+                <label>EDGE WEIGHT</label>
+                <select id="weightLinkSelect" class="tool-select compact-select"></select>
+                <div class="weight-controls">
+                    <input type="number" id="edgeWeightInput" class="weight-input" min="0.1" step="0.1" value="1">
+                    <button id="btn-apply-weight" class="tool-btn weight-btn">APPLY</button>
+                </div>
+            </div>
+
+            <div class="settings">
+                <label>GRAPH ZOOM</label>
+                <div class="zoom-controls">
+                    <button id="btn-zoom-out" class="tool-btn zoom-btn">-</button>
+                    <button id="btn-reset-view" class="tool-btn zoom-btn">RESET VIEW</button>
+                    <button id="btn-zoom-in" class="tool-btn zoom-btn">+</button>
+                </div>
             </div>
 
             <div id="astar-info" class="settings">
@@ -72,9 +93,9 @@
                 <div>f(n) <span id="fVal">-</span></div>
             </div>
 
+            <button id="btn-calc-all" class="tool-btn">CALC ALL f(n)</button>
             <button id="btn-run" class="execute-btn">RUN</button>
-            <button id="btn-toggle-algo" class="tool-btn">ALGO: A*</button>
-            <button id="btn-reset" class="reset-btn">RESET</button>
+            <button id="btn-reset" class="reset-btn">RESET GRAPH</button>
         </div>
 
         <!-- RIGHT PANEL -->

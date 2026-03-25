@@ -61,6 +61,26 @@ body.system-ready #main-content-wrapper { filter: blur(0); pointer-events: auto;
     background: transparent; border: 1px solid var(--bp-cyan);
     color: var(--bp-cyan); font-family: 'JetBrains Mono'; cursor: pointer; font-size: 0.7rem;
 }
+.tool-select {
+    width: 100%;
+    margin-bottom: 8px;
+    padding: 10px;
+    background: rgba(0, 242, 255, 0.06);
+    border: 1px solid var(--bp-cyan);
+    color: var(--bp-cyan);
+    font-family: 'JetBrains Mono';
+    font-size: 0.7rem;
+    outline: none;
+}
+.tool-select option {
+    background: #0b1120;
+    color: var(--bp-white);
+}
+.compact-select {
+    margin-bottom: 6px;
+    padding: 8px;
+    font-size: 0.65rem;
+}
 .danger-btn { color: var(--danger); border-color: var(--danger); }
 .active-tool { background: var(--bp-cyan) !important; color: var(--bp-bg) !important; }
 
@@ -83,6 +103,10 @@ body.system-ready #main-content-wrapper { filter: blur(0); pointer-events: auto;
 #feed-container { flex-grow: 1; overflow-y: auto; font-family: 'JetBrains Mono'; font-size: 0.7rem; padding: 15px 0; }
 .log-entry { border-bottom: 1px solid rgba(100, 255, 218, 0.1); padding: 12px 0; }
 .log-path { color: var(--bp-cyan); margin-top: 4px; display: block; font-weight: bold; }
+.log-label { font-size: 0.58rem; letter-spacing: 1px; opacity: 0.9; }
+.log-optimal .log-label { color: #00f2ff; }
+.log-explored .log-label { color: #ffd066; }
+.log-explored .log-path { color: #ffd066; font-weight: 600; }
 .packet-stats { display: flex; justify-content: space-between; padding-bottom: 15px; border-bottom: 1px solid var(--bp-border); }
 .stat small { display: block; font-size: 0.5rem; opacity: 0.6; }
 .stat span { font-size: 1.2rem; font-weight: bold; }
@@ -129,6 +153,40 @@ body.system-ready #main-content-wrapper { filter: blur(0); pointer-events: auto;
     height: 10px;
     background: var(--bp-cyan);
     cursor: pointer;
+}
+
+.zoom-controls {
+    display: flex;
+    gap: 8px;
+}
+
+.weight-controls {
+    display: flex;
+    gap: 8px;
+}
+
+.weight-input {
+    width: 100%;
+    background: rgba(0, 242, 255, 0.06);
+    border: 1px solid var(--bp-cyan);
+    color: var(--bp-cyan);
+    font-family: 'JetBrains Mono';
+    font-size: 0.75rem;
+    padding: 8px;
+    outline: none;
+}
+
+.weight-btn {
+    margin-bottom: 0;
+    width: auto;
+    min-width: 70px;
+    padding: 8px 12px;
+}
+
+.zoom-btn {
+    margin-bottom: 0;
+    padding: 8px;
+    font-size: 0.65rem;
 }
 
 /* ============================= */
@@ -187,6 +245,10 @@ canvas {
 
 .tool-btn:hover,
 .io-btn:hover {
+    background: rgba(0, 242, 255, 0.1);
+}
+
+.tool-select:hover {
     background: rgba(0, 242, 255, 0.1);
 }
 
