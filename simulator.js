@@ -14,6 +14,9 @@ let isPanning = false;
 
 let totalPacketsSent = 0;
 let trafficLevel = 1;
+let packetEmitterId = null;
+const MAX_ACTIVE_PACKETS = 24;
+const PACKET_EMIT_INTERVAL_MS = 260;
 
 let shortestPath = [];
 let rejectedLinks = [];
@@ -326,6 +329,27 @@ function buildPathToNode(node) {
     return path.reverse();
 }
 
+function stopPacketFlow() {
+    if (packetEmitterId) {
+        clearInterval(packetEmitterId);
+        packetEmitterId = null;
+    }
+}
+
+function startPacketFlow(path) {
+    stopPacketFlow();
+
+    if (!path || path.length < 2) return;
+
+    packetEmitterId = setInterval(() => {
+        if (packets.length >= MAX_ACTIVE_PACKETS) return;
+
+        packets.push({ path, step: 0, progress: 0 });
+        totalPacketsSent++;
+        document.getElementById("total-sent").innerText = totalPacketsSent;
+    }, PACKET_EMIT_INTERVAL_MS);
+}
+
 function isLinkInPath(link, path) {
     for (let i = 0; i < path.length - 1; i++) {
         const a = path[i];
@@ -347,6 +371,8 @@ async function runAStar() {
     shortestPath = [];
     rejectedLinks = [];
     traversedLinks = [];
+    packets = [];
+    stopPacketFlow();
 
     nodes.forEach(n => {
         n.g = Infinity;
@@ -378,7 +404,7 @@ async function runAStar() {
             shortestPath = path.reverse();
             updatePathCostValue(shortestPath);
 
-            sendPacket(shortestPath);
+            startPacketFlow(shortestPath);
             logPath(shortestPath);
             return;
         }
@@ -422,13 +448,7 @@ async function runAStar() {
 // PACKETS
 // ==============================
 function sendPacket(path) {
-    for (let i = 0; i < 3; i++) {
-        setTimeout(() => {
-            packets.push({ path, step: 0, progress: 0 });
-            totalPacketsSent++;
-            document.getElementById("total-sent").innerText = totalPacketsSent;
-        }, i * 200);
-    }
+    startPacketFlow(path);
 }
 
 // ==============================
@@ -464,6 +484,7 @@ function resetSearchState() {
     rejectedLinks = [];
     traversedLinks = [];
     packets = [];
+    stopPacketFlow();
 }
 
 function connectNodes(a, b) {
@@ -543,6 +564,7 @@ function resetGraph() {
     nodes = [];
     links = [];
     packets = [];
+    stopPacketFlow();
 
     selectedNode = null;
     startNode = null;
@@ -643,7 +665,8 @@ function animate() {
         ctx.lineTo(l.b.x, l.b.y);
 
         if (isPath) {
-            ctx.strokeStyle = "#00f2ff";
+            const pulse = 0.55 + 0.45 * Math.sin(performance.now() / 260);
+            ctx.strokeStyle = `rgba(0, 242, 255, ${pulse.toFixed(2)})`;
             ctx.lineWidth = 4 / viewScale;
         } else if (isSelected) {
             ctx.strokeStyle = "#ffffff";
