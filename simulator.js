@@ -1,175 +1,372 @@
+document.addEventListener("DOMContentLoaded", () => {
+
 const canvas = document.getElementById('networkCanvas');
 const ctx = canvas.getContext('2d');
-let nodes = [], links = [], packets = [], mode = 'move';
-let selectedNode = null, startNode = null, endNode = null, linkSource = null, isDragging = false;
+
+let nodes = [], links = [], packets = [];
+let mode = 'move';
+
+let selectedNode = null, startNode = null, endNode = null;
+let linkSource = null, isDragging = false;
+
 let totalPacketsSent = 0;
+let trafficLevel = 1;
+let globalEdgeWidth = 2;
 
-function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
-window.addEventListener('resize', resize); resize();
+let shortestPath = [];
+let rejectedLinks = [];
 
-document.getElementById('close-tutorial').onclick = () => {
-    document.body.classList.add('system-ready');
-    document.getElementById('tutorial-overlay').style.display = 'none';
-    document.getElementById('feed-container').innerHTML = '';
+let currentAlgo = "astar"; // 🔥 toggle
+
+// ==============================
+// INIT
+// ==============================
+document.getElementById("close-tutorial").onclick = () => {
+    document.body.classList.add("system-ready");
+    document.getElementById("tutorial-overlay").remove();
 };
 
-// --- LOGGING & STATUS ---
-function logBatch(path, batchId) {
-    const container = document.getElementById('feed-container');
-    const entry = document.createElement('div');
-    entry.className = 'log-entry';
-    
-    const pathStr = path.map(n => n.id).join(' → ');
-    entry.innerHTML = `
-        <div style="opacity: 0.5; font-size: 0.6rem;">BATCH #${batchId.toString().padStart(3, '0')}</div>
-        <span class="log-path">${pathStr}</span>
-        <div id="status-${batchId}" class="status-tag status-init">INITIALIZED</div>
-    `;
-    container.prepend(entry);
-    if (container.children.length > 10) container.lastChild.remove();
+// ==============================
+// RESIZE
+// ==============================
+function resize() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
 }
+window.addEventListener('resize', resize);
+resize();
 
-function updateStatus(batchId) {
-    const el = document.getElementById(`status-${batchId}`);
-    if (el) {
-        el.innerText = "DELIVERED";
-        el.className = "status-tag status-done";
-    }
-}
-
+// ==============================
+// NODE
+// ==============================
 class Node {
     constructor(id, x, y) {
-        this.id = id; this.x = x; this.y = y; this.radius = 22;
-        this.isPath = false; this.isCongested = false;
+        this.id = id;
+        this.x = x;
+        this.y = y;
+        this.g = Infinity;
+        this.parent = null;
+        this.congested = false;
     }
-    draw() {
-        ctx.save();
-        ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-        
-        // Node State Coloring
-        if (this.isCongested) { ctx.fillStyle = "#ff4d4d"; }
-        else if (this === startNode || this === endNode) { ctx.fillStyle = "#00f2ff"; }
-        else { ctx.fillStyle = "#0f172a"; }
 
-        ctx.strokeStyle = (this === selectedNode) ? "#fff" : (this.isCongested ? "#ff4d4d" : "#00f2ff");
-        ctx.lineWidth = (this.isPath) ? 4 : 2;
-        ctx.fill(); ctx.stroke();
-        
-        // Text Label
-        ctx.fillStyle = (this === startNode || this === endNode || this.isCongested) ? "#020617" : "#00f2ff";
-        ctx.font = "bold 11px 'JetBrains Mono'"; ctx.textAlign = "center";
-        ctx.fillText(this.id, this.x, this.y + 4);
-        ctx.restore();
+    draw() {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, 20, 0, Math.PI * 2);
+
+        if (this === startNode) ctx.fillStyle = "#00ff88";
+        else if (this === endNode) ctx.fillStyle = "#ffcc00";
+        else if (this.congested) ctx.fillStyle = "#ff4d4d";
+        else ctx.fillStyle = "#0f172a";
+
+        ctx.fill();
+        ctx.strokeStyle = "#00f2ff";
+        ctx.stroke();
+
+        ctx.fillStyle = "#00f2ff";
+        ctx.font = "10px monospace";
+        ctx.textAlign = "center";
+
+        ctx.fillText(this.id, this.x, this.y - 8);
+        ctx.fillText("P:" + this.id, this.x, this.y + 10);
+
+        if (this.parent && endNode) {
+            let h = heuristic(this, endNode);
+            let f = this.g + h;
+            ctx.fillText(`f:${f.toFixed(1)}`, this.x, this.y + 25);
+        }
     }
 }
 
-// --- INTERACTION ---
+// ==============================
+// INTERACTION
+// ==============================
 canvas.addEventListener('mousedown', e => {
-    if (!document.body.classList.contains('system-ready')) return;
-    const m = { x: e.offsetX, y: e.offsetY };
-    const clicked = nodes.find(n => Math.hypot(n.x - m.x, n.y - m.y) < 30);
 
-    if (mode === 'node' && !clicked) nodes.push(new Node(`R${nodes.length}`, m.x, m.y));
-    else if (mode === 'congest' && clicked) {
-        clicked.isCongested = !clicked.isCongested;
+    if (!document.body.classList.contains('system-ready')) return;
+
+    const x = e.offsetX, y = e.offsetY;
+    const clicked = nodes.find(n => Math.hypot(n.x - x, n.y - y) < 20);
+
+    if (mode === 'node' && !clicked) {
+        nodes.push(new Node(`R${nodes.length}`, x, y));
     }
-    else if (mode === 'move' && clicked) { selectedNode = clicked; isDragging = true; }
+
+    else if (mode === 'move' && clicked) {
+        selectedNode = clicked;
+        isDragging = true;
+    }
+
     else if (mode === 'link' && clicked) {
         if (!linkSource) linkSource = clicked;
-        else if (linkSource !== clicked) {
-            links.push({ a: linkSource, b: clicked });
+        else {
+            links.push({ a: linkSource, b: clicked, weight: 1 });
             linkSource = null;
         }
-    } else selectedNode = clicked || null;
+    }
+
+    else if (mode === 'congest' && clicked) {
+        clicked.congested = !clicked.congested;
+    }
+
+    else selectedNode = clicked;
 });
 
-window.addEventListener('mousemove', e => { if (isDragging && selectedNode) { selectedNode.x = e.offsetX; selectedNode.y = e.offsetY; } });
+window.addEventListener('mousemove', e => {
+    if (isDragging && selectedNode) {
+        selectedNode.x = e.offsetX;
+        selectedNode.y = e.offsetY;
+    }
+});
+
 window.addEventListener('mouseup', () => isDragging = false);
 
-// --- A* PATHFINDING ---
-async function runAStar() {
-    if (!startNode || !endNode || startNode.isCongested || endNode.isCongested) return;
+// ==============================
+// HEURISTIC
+// ==============================
+function heuristic(a, b) {
+    return Math.hypot(a.x - b.x, a.y - b.y);
+}
 
-    nodes.forEach(n => { n.visited = false; n.isPath = false; n.parent = null; });
+// ==============================
+// LIVE PANEL
+// ==============================
+function updateLivePanel(node) {
+    if (!node || !endNode) return;
+
+    let g = node.g || 0;
+    let h = heuristic(node, endNode);
+    let f = g + h;
+
+    document.getElementById("nodeName").innerText = node.id;
+    document.getElementById("gVal").innerText = g.toFixed(2);
+    document.getElementById("hVal").innerText = h.toFixed(2);
+    document.getElementById("fVal").innerText = f.toFixed(2);
+}
+
+// ==============================
+// A* / DIJKSTRA
+// ==============================
+async function runAStar() {
+
+    if (!startNode || !endNode) return;
+
+    shortestPath = [];
+    rejectedLinks = [];
+
+    nodes.forEach(n => {
+        n.g = Infinity;
+        n.parent = null;
+    });
+
+    startNode.g = 0;
     let openSet = [startNode];
 
-    while (openSet.length > 0) {
-        let curr = openSet.shift();
-        if (curr === endNode) {
-            let path = []; let t = curr;
-            while(t) { path.push(t); t.isPath = true; t = t.parent; }
-            const finalPath = path.reverse();
-            
-            totalPacketsSent++;
-            document.getElementById('total-sent').innerText = totalPacketsSent;
-            logBatch(finalPath, totalPacketsSent);
-            
-            packets.push({ path: finalPath, step: 0, progress: 0, id: totalPacketsSent });
+    while (openSet.length) {
+
+        if (currentAlgo === "astar") {
+            openSet.sort((a, b) =>
+                (a.g + heuristic(a, endNode)) -
+                (b.g + heuristic(b, endNode))
+            );
+        } else {
+            openSet.sort((a, b) => a.g - b.g);
+        }
+
+        let current = openSet.shift();
+        updateLivePanel(current);
+
+        if (current === endNode) {
+
+            let path = [];
+            let t = current;
+
+            while (t) {
+                path.push(t);
+                t = t.parent;
+            }
+
+            shortestPath = path.reverse();
+
+            sendPacket(shortestPath);
+            logPath(shortestPath);
             return;
         }
-        curr.visited = true;
-        links.forEach(l => {
-            let n = (l.a === curr) ? l.b : (l.b === curr ? l.a : null);
-            if (n && !n.visited && !n.isCongested && !openSet.includes(n)) {
-                n.parent = curr; openSet.push(n);
+
+        links.forEach(link => {
+            let neighbor =
+                link.a === current ? link.b :
+                link.b === current ? link.a : null;
+
+            if (!neighbor) return;
+
+            let cost = link.weight * trafficLevel;
+            if (neighbor.congested) cost *= 3;
+
+            let tempG = current.g + cost;
+
+            if (tempG < neighbor.g) {
+                neighbor.g = tempG;
+                neighbor.parent = current;
+
+                if (!openSet.includes(neighbor)) {
+                    openSet.push(neighbor);
+                }
+            } else {
+                rejectedLinks.push(link);
             }
         });
+
+        await new Promise(r => setTimeout(r, 100));
     }
 }
 
+// ==============================
+// PACKETS
+// ==============================
+function sendPacket(path) {
+    for (let i = 0; i < 3; i++) {
+        setTimeout(() => {
+            packets.push({ path, step: 0, progress: 0 });
+            totalPacketsSent++;
+            document.getElementById("total-sent").innerText = totalPacketsSent;
+        }, i * 200);
+    }
+}
+
+// ==============================
+// LOG
+// ==============================
+function logPath(path) {
+    const container = document.getElementById("feed-container");
+
+    const entry = document.createElement("div");
+    entry.className = "log-entry";
+
+    entry.innerHTML = path.map(n => n.id).join(" → ");
+    container.prepend(entry);
+}
+
+// ==============================
+// MESH
+// ==============================
+function generateMesh() {
+    if (nodes.length < 2) return;
+
+    links = [];
+
+    for (let i = 0; i < nodes.length; i++) {
+        for (let j = i + 1; j < nodes.length; j++) {
+            let a = nodes[i];
+            let b = nodes[j];
+
+            let weight = Math.hypot(a.x - b.x, a.y - b.y) / 100;
+
+            links.push({ a, b, weight: parseFloat(weight.toFixed(2)) });
+        }
+    }
+}
+
+// ==============================
+// DRAW
+// ==============================
 function animate() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    
-    // Links
+
     links.forEach(l => {
-        ctx.beginPath(); ctx.moveTo(l.a.x, l.a.y); ctx.lineTo(l.b.x, l.b.y);
-        ctx.strokeStyle = (l.a.isPath && l.b.isPath) ? "#00f2ff" : "rgba(0, 242, 255, 0.1)";
-        ctx.lineWidth = (l.a.isPath && l.b.isPath) ? 3 : 1.5;
+
+        const isPath = shortestPath.includes(l.a) && shortestPath.includes(l.b);
+        const isRejected = rejectedLinks.includes(l);
+
+        ctx.beginPath();
+        ctx.moveTo(l.a.x, l.a.y);
+        ctx.lineTo(l.b.x, l.b.y);
+
+        if (isPath) {
+            ctx.strokeStyle = "#00f2ff";
+            ctx.lineWidth = 4;
+        } else if (isRejected) {
+            ctx.strokeStyle = "#ff4d4d";
+            ctx.lineWidth = 2;
+        } else {
+            ctx.strokeStyle = "rgba(0,242,255,0.2)";
+            ctx.lineWidth = globalEdgeWidth;
+        }
+
         ctx.stroke();
+
+        ctx.fillStyle = "#fff";
+        ctx.fillText(l.weight, (l.a.x + l.b.x)/2, (l.a.y + l.b.y)/2);
     });
 
-    // Packets
     packets.forEach((p, i) => {
-        let s = p.path[p.step], e = p.path[p.step+1];
-        if (e) {
-            p.progress += 0.04;
-            let x = s.x + (e.x-s.x)*p.progress, y = s.y + (e.y-s.y)*p.progress;
-            ctx.save();
-            ctx.fillStyle = "#fff"; ctx.shadowBlur = 10; ctx.shadowColor = "#00f2ff";
-            ctx.beginPath(); ctx.arc(x,y,5,0,Math.PI*2); ctx.fill(); 
-            ctx.restore();
-            if (p.progress >= 1) { p.progress = 0; p.step++; }
-        } else { 
-            updateStatus(p.id);
-            packets.splice(i, 1); 
+        let a = p.path[p.step];
+        let b = p.path[p.step + 1];
+
+        if (!b) return packets.splice(i,1);
+
+        updateLivePanel(a);
+
+        p.progress += 0.04;
+
+        let x = a.x + (b.x - a.x) * p.progress;
+        let y = a.y + (b.y - a.y) * p.progress;
+
+        ctx.beginPath();
+        ctx.arc(x, y, 5, 0, Math.PI * 2);
+        ctx.fillStyle = "#fff";
+        ctx.fill();
+
+        if (p.progress >= 1) {
+            p.progress = 0;
+            p.step++;
         }
     });
 
-    document.getElementById('packet-count').innerText = packets.length;
+    document.getElementById("packet-count").innerText = packets.length;
+
     nodes.forEach(n => n.draw());
+
     requestAnimationFrame(animate);
 }
 
-// UI Bindings
-const btns = document.querySelectorAll('.tool-btn');
-btns.forEach(b => b.onclick = () => {
-    btns.forEach(x => x.classList.remove('active-tool'));
-    b.classList.add('active-tool');
-    mode = b.id.replace('btn-', '');
+// ==============================
+// UI
+// ==============================
+function bind(id, fn) {
+    document.getElementById(id).addEventListener("click", fn);
+}
+
+bind("btn-node", () => mode = "node");
+bind("btn-link", () => mode = "link");
+bind("btn-move", () => mode = "move");
+bind("btn-congest", () => mode = "congest");
+
+bind("btn-start", () => startNode = selectedNode);
+bind("btn-end", () => endNode = selectedNode);
+
+bind("btn-run", runAStar);
+bind("btn-mesh", generateMesh);
+
+// 🔥 ALGO TOGGLE
+bind("btn-toggle-algo", () => {
+    if (currentAlgo === "astar") {
+        currentAlgo = "dijkstra";
+        document.getElementById("btn-toggle-algo").innerText = "ALGO: DIJKSTRA";
+    } else {
+        currentAlgo = "astar";
+        document.getElementById("btn-toggle-algo").innerText = "ALGO: A*";
+    }
 });
 
-document.getElementById('btn-start').onclick = () => { if(selectedNode) startNode = selectedNode; };
-document.getElementById('btn-end').onclick = () => { if(selectedNode) endNode = selectedNode; };
-document.getElementById('btn-run').onclick = runAStar;
-document.getElementById('btn-reset').onclick = () => { nodes = []; links = []; packets = []; totalPacketsSent = 0; document.getElementById('total-sent').innerText = 0; document.getElementById('feed-container').innerHTML = ''; };
+document.getElementById("edgeWidthSlider").oninput = e => {
+    globalEdgeWidth = parseInt(e.target.value);
+};
 
-// Clock
-setInterval(() => {
-    if (!document.body.classList.contains('system-ready')) return;
-    let el = document.getElementById('uptime');
-    let [m, s] = el.innerText.split(':').map(Number);
-    s++; if(s===60) { s=0; m++; }
-    el.innerText = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
-}, 1000);
+document.getElementById("noise-slider").oninput = e => {
+    trafficLevel = 1 + e.target.value / 50;
+};
 
+// ==============================
 animate();
+
+});

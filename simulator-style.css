@@ -87,3 +87,113 @@ body.system-ready #main-content-wrapper { filter: blur(0); pointer-events: auto;
 .stat small { display: block; font-size: 0.5rem; opacity: 0.6; }
 .stat span { font-size: 1.2rem; font-weight: bold; }
 .uptime-bar { border-top: 1px solid var(--bp-border); padding-top: 15px; font-size: 0.8rem; font-weight: bold; }
+/* ============================= */
+/* 🔥 NEW: SETTINGS UI IMPROVEMENTS */
+/* ============================= */
+
+.settings {
+    margin-bottom: 15px;
+    font-size: 0.65rem;
+    font-family: 'JetBrains Mono';
+}
+
+.settings label {
+    display: block;
+    margin-bottom: 6px;
+    opacity: 0.7;
+    letter-spacing: 1px;
+}
+
+/* Slider styling */
+.settings input[type="range"] {
+    width: 100%;
+    appearance: none;
+    height: 3px;
+    background: rgba(0, 242, 255, 0.2);
+    outline: none;
+    border-radius: 2px;
+}
+
+/* Slider thumb */
+.settings input[type="range"]::-webkit-slider-thumb {
+    appearance: none;
+    width: 10px;
+    height: 10px;
+    background: var(--bp-cyan);
+    cursor: pointer;
+    box-shadow: 0 0 8px var(--bp-cyan);
+}
+
+.settings input[type="range"]::-moz-range-thumb {
+    width: 10px;
+    height: 10px;
+    background: var(--bp-cyan);
+    cursor: pointer;
+}
+
+/* ============================= */
+/* 🔥 NEW: A* LIVE PANEL */
+/* ============================= */
+
+#astar-info {
+    border: 1px solid rgba(0, 242, 255, 0.2);
+    padding: 10px;
+    background: rgba(0, 242, 255, 0.03);
+    margin-top: 10px;
+}
+
+#astar-info label {
+    color: var(--bp-cyan);
+    font-weight: bold;
+    margin-bottom: 8px;
+    display: block;
+}
+
+#astar-info div {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.7rem;
+    margin-bottom: 4px;
+}
+
+#astar-info span {
+    color: var(--bp-cyan);
+    font-weight: bold;
+}
+
+/* ============================= */
+/* 🔥 OPTIONAL: ACTIVE LINK GLOW */
+/* ============================= */
+
+canvas {
+    transition: 0.2s;
+}
+
+/* ============================= */
+/* 🔥 SMOOTH PANEL SCROLL */
+/* ============================= */
+
+#feed-container::-webkit-scrollbar {
+    width: 4px;
+}
+
+#feed-container::-webkit-scrollbar-thumb {
+    background: rgba(0, 242, 255, 0.3);
+}
+
+/* ============================= */
+/* 🔥 HOVER EFFECTS */
+/* ============================= */
+
+.tool-btn:hover,
+.io-btn:hover {
+    background: rgba(0, 242, 255, 0.1);
+}
+
+.execute-btn:hover {
+    box-shadow: 0 0 12px var(--bp-cyan);
+}
+
+.reset-btn:hover {
+    opacity: 0.8;
+}
